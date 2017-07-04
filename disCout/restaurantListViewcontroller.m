@@ -1,10 +1,4 @@
-//
-//  restaurantListViewcontroller.m
-//  disCout
-//
-//  Created by Theodor Hedin on 7/24/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import "Request.h"
 #import "AppDelegate.h"
 #import "YPAPISample.h"
@@ -24,8 +18,6 @@
     NSMutableArray* registeredRestaurants;
     NSMutableArray *muarResName;
     NSSortDescriptor * descriptor;
-    
-    //NSArray *businessArray;
     bool checkScroll;
     
 }
@@ -35,7 +27,7 @@
 
 @implementation restaurantListViewcontroller
 
-
+#pragma mark - set environment
 - (void)viewDidLoad {
     
     [super viewDidLoad];
@@ -47,7 +39,6 @@
 - (void)viewWillAppear:(BOOL)animated{
     muarResName = [[NSMutableArray alloc]init];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        //[Request retrieveAllRestaurantsID];
         dispatch_async(dispatch_get_main_queue(), ^{
             NSMutableArray *tempArray = [[NSMutableArray alloc]init];
             for (int count1 = 0; app.arrRegisteredDictinaryRestaurantData.count>count1; count1++) {
@@ -66,19 +57,23 @@
     [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     [self.view addGestureRecognizer:self.revealViewController.tapGestureRecognizer];
 }
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
+
+#pragma mark - go side
 - (IBAction)goSideMenu:(UIButton *)sender {
     [self.navigationController.revealViewController rightRevealToggle:nil];
 }
 
+#pragma mark - exchange map
 - (IBAction)ExchangeMap:(UIButton *)sender {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    LocationMapOfRestaurants *restaurantInfoViewController = [storyboard instantiateViewControllerWithIdentifier:@"LocationMapOfRestaurants"];
-    [self.navigationController pushViewController:restaurantInfoViewController animated:YES];
+
+        [self.navigationController popViewControllerAnimated:YES];
+  
 }
+- (IBAction)GoBack:(UIButton *)sender {
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+#pragma mark - sort
 - (IBAction)Sort:(UIButton *)sender {
     
     
@@ -91,16 +86,12 @@
         app.arrSearchedDictinaryRestaurantData = [[NSMutableArray alloc]initWithArray:[app.arrSearchedDictinaryRestaurantData sortedArrayUsingDescriptors:@[descriptor]]];
     }
     
-    //app.arrSearchedDictinaryRestaurantData = [[NSMutableArray alloc]initWithArray:[app.arrSearchedDictinaryRestaurantData sortedArrayUsingDescriptors:@[descriptor]]];
-        [self.tableResList reloadData];
+    [self.tableResList reloadData];
 
     
 }
 
-- (IBAction)GoBack:(UIButton *)sender {
-    [self.navigationController popViewControllerAnimated:YES];
-}
-
+#pragma mark - restaurant collectionView delegate
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
     
     return app.arrSearchedDictinaryRestaurantData.count;
@@ -108,15 +99,7 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath{
     
-    //retrieve registered restaurants
-    
-    //registeredRestaurants = [[NSMutableArray alloc]initWithArray:app.registeredRestaurants];
-
-    
-    
     static NSString *identifier = @"resCell";
-    
-    
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:identifier forIndexPath:indexPath];
     
     UILabel *resAddress = (UILabel *)[cell viewWithTag:101];
@@ -159,12 +142,10 @@
     
     
     return cell;
-    //UIImageView *resImage =
     
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(nonnull NSIndexPath *)indexPath{
-    //app = [UIApplication sharedApplication].delegate;
     app.selectedResNumberFromResList = (int)indexPath.row;
     app.dicRestaurantData = [[NSDictionary alloc]initWithDictionary:[app.arrSearchedDictinaryRestaurantData objectAtIndex:app.selectedResNumberFromResList] copyItems:YES];
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
@@ -176,155 +157,6 @@
 }
 
 
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView{
-    
-    if (!checkScroll) {
-        
-
-    int indexOfTable;
-    if ([scrollView isKindOfClass:[UICollectionView class]])
-    {
-        
-        UICollectionView *mainCollection = (UICollectionView *) scrollView;
-        
-        
-        CGRect visibleRect = (CGRect){.origin = mainCollection.contentOffset, .size = mainCollection.bounds.size};
-        CGPoint visiblePoint = CGPointMake(CGRectGetMidX(visibleRect), CGRectGetMaxY(visibleRect)-50);
-        NSIndexPath *visibleIndexPath = [mainCollection indexPathForItemAtPoint:visiblePoint];
-        NSLog(@"visibleIndexPath %ld",(long)visibleIndexPath.row);
-        indexOfTable = (int)visibleIndexPath.row;
-    }
-
-
-    if (indexOfTable + 3 > [self.tableResList numberOfItemsInSection:0] && app.IsMatch) {
-        checkScroll = true;
-        [self.view setUserInteractionEnabled:NO];
-        [MBProgressHUD showHUDAddedTo:self.view animated:YES];
-        
-    
-    app.offsetNumber = app.offsetNumber +1;
-    count = 1;
-    
-    //app.businessArray = [[NSMutableArray alloc] init];
-    //app.arrRestaurantData = [[NSMutableArray alloc]init];
-    app.offsetNumber = app.offsetNumber +1;
-    NSString *startoffset;
-    YPAPISample *APISample = [[YPAPISample alloc] init];
-    //app.arrSearchedRestaurants = [[NSArray alloc]init];
-    startoffset = [NSString stringWithFormat:@"%d", ((app.offsetNumber-1) * 20) +1];
-    [APISample queryTopBusinessInfoForTerm:app.term location:app.location offset:startoffset completionHandler:^(NSDictionary *searchResponseJSON, NSError *error) {
-        if (error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"An error happened during the request: %@", error);
-            [MBProgressHUD hideHUDForView:self.view animated:YES];/////
-            [self.view setUserInteractionEnabled:YES];
-            checkScroll = false;
-            });
-        } else if (searchResponseJSON) {
-            NSMutableArray* businessArray = searchResponseJSON[@"businesses"];
-            //app.arrSearchedRestaurants = app.businessArray;
-            for (NSDictionary *itemRestaurant in businessArray) {
-                NSString *resName = (NSString*)[itemRestaurant objectForKey:@"name"]? [itemRestaurant objectForKey:@"name"] : @" ";
-                NSString* ResSnippetText = (NSString*)[itemRestaurant objectForKey:@"snippet_text"]? [itemRestaurant objectForKey:@"snippet_text"] : @" ";
-                if (!ResSnippetText) {
-                    ResSnippetText = @"";
-                }
-                
-                // get location start
-                NSDictionary *dic1 = [itemRestaurant objectForKey:@"location"];
-                
-                NSArray *addressArray = (NSArray*)[dic1 objectForKey:@"display_address"];
-                NSString *resAddress;
-                for (int count1 = 0; addressArray.count > count1; count1++) {
-                    if (count1==1) {
-                        resAddress = [NSString stringWithFormat:@"%@", [addressArray objectAtIndex:count1]];
-                    }else{
-                        resAddress = [NSString stringWithFormat:@"%@, %@",resAddress, [addressArray objectAtIndex:count1]];
-                    }
-                    
-                }
-                if (resAddress==nil) {
-                    resAddress = @" ";
-                }
-                
-                //NSString* postalcode = (NSString*)[dic1 objectForKey:@"postal_code"];
-                NSDictionary *dic2 = [dic1 objectForKey:@"coordinate"];
-                NSString* lati = [dic2 objectForKey:@"latitude"] ? [dic2 objectForKey:@"latitude"] : @" ";
-                NSString* longgi = [dic2 objectForKey:@"longitude"] ? [dic2 objectForKey:@"longitude"] : @" ";
-                NSString* postalcode = (NSString*)[dic1 objectForKey:@"postal_code"] ? [dic1 objectForKey:@"postal_code"] : @" ";
-                //get categories
-                NSArray *resdicres = (NSArray*)[itemRestaurant objectForKey:@"categories"];
-                NSString *resCategories;
-                for (int count1 = 0; resdicres.count > count1; count1++) {
-                    
-                    if (count1==0) {
-                        resCategories = [NSString stringWithFormat:@"%@", [[resdicres objectAtIndex:count1] firstObject]];
-                    }else if(count1==2){
-                        resCategories = [NSString stringWithFormat:@"%@, %@",resCategories, [[resdicres objectAtIndex:count1] firstObject]];
-                    }
-                }
-                
-                if (resCategories==nil) {
-                    resCategories = @" ";
-                }
-                
-                NSString *resRating = [itemRestaurant objectForKey:@"rating"] ? [itemRestaurant objectForKey:@"rating"] : @" ";
-                NSString *resImageURL = [itemRestaurant objectForKey:@"image_url"] ? [itemRestaurant objectForKey:@"image_url"] : @" ";
-                NSString *resRatingImageURL = [itemRestaurant objectForKey:@"rating_img_url"] ? [itemRestaurant objectForKey:@"rating_img_url"] : @" ";
-                NSString *resDisplayPhoneNumber = [itemRestaurant objectForKey:@"display_phone"] ? [itemRestaurant objectForKey:@"display_phone"] : @" ";
-                NSString *resReviewCount = [itemRestaurant objectForKey:@"review_count"] ? [itemRestaurant objectForKey:@"review_count"] : @" ";
-                NSString *resMobileURL = [itemRestaurant objectForKey:@"mobile_url"] ? [itemRestaurant objectForKey:@"mobile_url"] : @" ";
-                [muarResName addObject:resName];
-                NSDictionary *dicRestaurantData = [NSDictionary dictionaryWithObjectsAndKeys:resName, @"name", resCategories, @"categories", resDisplayPhoneNumber, @"display_phone", resAddress, @"address", resRating, @"rating", resReviewCount, @"review_count", postalcode, @"postal_code", lati,@"latitude",longgi, @"longitude", resRatingImageURL, @"rating_img_url", ResSnippetText, @"snippet_text", resImageURL, @"image_url", resMobileURL, @"mobile_url", nil];
-                
-                if (app.isSelectedAllCuisine) {
-                    [app.arrSearchedDictinaryRestaurantData addObject:dicRestaurantData];
-                }else{
-                    for (int count1 = 0;app.arrCuisine.count>count1;count1++) {
-                        if ([[app.arrSelectedCuisine objectAtIndex:count1] isEqualToString:@"1"] && [resCategories containsString:[app.arrCuisine objectAtIndex:count1]]) {
-                            [app.arrSearchedDictinaryRestaurantData addObject:dicRestaurantData];
-                            break;
-                        }
-                        
-                    }
-                }
-
-                
-                //snnipet and rating image download
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-                    /////
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        
-                        
-                        if (count == businessArray.count) {
-                            [MBProgressHUD hideHUDForView:self.view animated:YES];/////
-                            [self.view setUserInteractionEnabled:YES];
-                            checkScroll = false;
-                            [self.tableResList reloadData];
-                            
-                        }
-                        count++;
-                    });
-                    /////
-                    
-                });
-                
-            }
-            
-        } else {
-            dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"No business was found");
-            app.IsMatch = false;
-            checkScroll = false;
-            [MBProgressHUD hideHUDForView:self.view animated:YES];
-            [self.view setUserInteractionEnabled:YES];
-            });
-        }
-    }];
-    }
-
-    }
-}
 
 
 @end

@@ -1,12 +1,7 @@
-//
-//  AppDelegate.h
-//  disCout
-//
-//  Created by Theodor Hedin on 7/20/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import <UIKit/UIKit.h>
 #import "UserInfo.h"
+#import "PayPalMobile.h"
 @import Firebase;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
@@ -18,6 +13,7 @@
 @property (nonatomic)int selectedResNumberFromResList;
 //@property (nonatomic,retain)NSDictionary *dicSearchedDictionaryRestaurantData;
 @property (nonatomic,retain)NSMutableArray *arrSearchedDictinaryRestaurantData;
+@property (nonatomic,retain)NSMutableArray *arrTempSearchedDictinaryRestaurantData;
 @property (nonatomic,retain)NSMutableArray *arrRegisteredDictinaryRestaurantData;
 @property (nonatomic,retain)NSMutableArray *arrPayDictinaryData;//dic->user, user->paydate and payamount
 
@@ -32,35 +28,23 @@
 @property(nonatomic, retain)NSMutableArray* arrSelectedCuisine;
 
 //user info
-@property(nonatomic, retain) FIRUser *userAccount;
 @property(nonatomic, retain) NSString *UserName;
 @property(nonatomic, retain) NSString *UserID;
 @property(nonatomic, retain) NSString *UserPhotoURL;
 @property(nonatomic, retain) UserInfo *user;
 @property(nonatomic, retain) NSError* Acterror;
-//pay info
-//@property(nonatomic, retain) NSMutableArray *paydates;
-//@property(nonatomic, retain) NSMutableArray *payamounts;
 
-//registered restaurant info(names)
-//@property(nonatomic, retain) NSMutableArray *registeredRestaurants;
-
-//selected restaurant info
-//@property (nonatomic,retain)RestaurantInfo *resSelectedRestaurantInfo;
-
-//offset in yelp search result
-@property(nonatomic)int offsetNumber;
-//@property (nonatomic,retain)NSMutableArray *businessArray;
+//search
 @property(nonatomic)int intSearchOption1;
 @property(nonatomic)int intSearchOption2;
-//@property (nonatomic,retain)NSMutableArray *arrRestaurantData;
 @property (nonatomic, retain)NSString *term;
 @property (nonatomic, retain)NSString *location;
 @property(nonatomic)BOOL IsMatch;
 
 //manager mail
 @property (nonatomic, retain)NSString *managerMail;
-@property (nonatomic) BOOL isManager;
+@property (nonatomic) BOOL boolOncePassed;
+@property (nonatomic, retain) NSString *scannedCode;
 
 //location
 @property (nonatomic) float myLatitude;

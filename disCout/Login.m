@@ -1,10 +1,4 @@
-//
-//  Login.m
-//  disCout
-//
-//  Created by Theodor Hedin on 7/20/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import "Request.h"
 #import "Login.h"
 #import "SignUp.h"
@@ -16,9 +10,8 @@
 @interface Login ()<UITextFieldDelegate>
 
 {
+    AppDelegate *app;
     int childCount;
-    AppDelegate* app;
-    NSString* checkMail;
 }
 
 @property (weak, nonatomic) IBOutlet UITextField *txtFieldEmail;
@@ -26,12 +19,58 @@
 @property (weak, nonatomic) IBOutlet UIButton *btnSignIn;
 @property (weak, nonatomic) IBOutlet UIButton *btnSignUp;
 @property (weak, nonatomic) IBOutlet UIButton *btnSignWithFacebook;
+@property (weak, nonatomic) IBOutlet UIButton *btnDismissKeyboard;
 
 @end
 
 @implementation Login
 
+#pragma mark - set environment
 -(void)viewDidLoad{
+    [super viewDidLoad];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWasShown:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardBeHidden:) name:UIKeyboardWillHideNotification object:nil];
+    [self.btnDismissKeyboard setHidden:YES];
+
+}
+
+//keyboard show/hidden
+- (IBAction)hideKeyboard:(UIButton *)sender {
+    [self.view endEditing:YES];
+}
+- (void)keyboardWasShown:(NSNotification *)aNotification {
+    [self.btnDismissKeyboard setHidden:NO];
+}
+- (void)keyboardBeHidden:(NSNotification *)aNotification {
+    
+    [self.btnDismissKeyboard setHidden:YES];
+}
+- (void) drawPlaceholderInRect:(CGRect)rect{
+    
+    [[UIColor whiteColor] setFill];
+
+}
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+
+    if (textField.tag == 101) {
+        
+        [(UITextField*)[self.view viewWithTag:102] becomeFirstResponder];
+        return YES;
+    }else if(textField.tag == 102){
+        [textField resignFirstResponder];
+        [self goFromLogin:nil];
+        return YES;
+        
+        
+    }
+    [textField resignFirstResponder];
+    return YES;
+    
+}
+
+#pragma mark - check last login and go main view
+- (void)viewWillAppear:(BOOL)animated{
+    [self.view setUserInteractionEnabled:YES];
     app = [UIApplication sharedApplication].delegate;
     
     NSDictionary * attributes = (NSMutableDictionary *)[ (NSAttributedString *)self.txtFieldEmail.attributedPlaceholder attributesAtIndex:0 effectiveRange:NULL];
@@ -39,56 +78,96 @@
     [newAttributes setObject:[UIColor whiteColor] forKey:NSForegroundColorAttributeName];
     self.txtFieldEmail.attributedPlaceholder = [[NSAttributedString alloc] initWithString:[self.txtFieldEmail.attributedPlaceholder string] attributes:newAttributes];
     self.txtFieldPassword.attributedPlaceholder = [[NSAttributedString alloc] initWithString:[self.txtFieldPassword.attributedPlaceholder string] attributes:newAttributes];
-    [self getCheckMail];
-}
--(void) getCheckMail{
     FIRUser *user = [Request currentUser];
-    if (user !=nil) {
-        [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    if (user !=nil && !user.anonymous) {
+        
         [self.view setUserInteractionEnabled:NO];
-        // get compared mail <checkMail>
-        FIRDatabaseReference* refManger = [[[FIRDatabase database] reference] child:@"manager"];
+        [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+        
+        //get manager data
+        app.user.userId = [NSString stringWithFormat:@"%@", [Request currentUserUid]];
+        NSString *userID = app.user.userId;
+        FIRDatabaseReference *refManagerInfor = [[[Request dataref] child:@"users"]child: userID];
+        //FIRDatabaseReference *ref = [Request dataref];
         dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-            //[self loadResData];
-            [refManger observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-                NSDictionary*dic = snapshot.value;
-                NSArray *keys;
-                if (![dic isKindOfClass:[NSNull class]]) {
-                    keys = dic.allKeys;
+            [refManagerInfor observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+                if (snapshot.exists) {
+                    NSDictionary *dic = [snapshot.value objectForKey:@"general info"];
+                    app.user.name = [dic objectForKey:@"name"];
+                    app.user.userId = userID;
+                    app.user.email = [dic objectForKey:@"email"];
+                    app.user.photoURL = [NSURL URLWithString:[dic objectForKey:@"photourl"]];
+                    app.user.cardCVID = [dic objectForKey:@"cardcvid"];
+                    app.user.cardDate = [dic objectForKey:@"carddate"];
+                    
+                    app.user.cardNumber = [dic objectForKey:@"cardnumber"];
+                    
+                    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                    dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+                    NSTimeZone *gmt = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
+                    [dateFormatter setTimeZone:gmt];
+                    app.user.dateCycleStart = [[NSDate alloc]init];
+                    app.user.dateCycleStart  = [dateFormatter dateFromString:(NSString*)[dic objectForKey:@"dateCycleStart"]];
+                    int numberOfMonths = [self checkDateInterval:app.user.dateCycleStart];
+                    NSString *isCancelled = [dic objectForKey:@"iscancelled"];
+                    if (numberOfMonths >= 1) {
+                        isCancelled = @"true";
+                    }else{
+                        isCancelled = @"false";
+                    }
+                    
+                    app.user.numberOfCoupons = [[dic objectForKey:@"numberOfCoupons"] intValue];
+                    app.user.isCancelled = [isCancelled boolValue];
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        //go maim workspace
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];
+                        [self.view setUserInteractionEnabled:YES];
+                        [self loadResData];
+                        [self loadPayData];
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];/////
+                        [self.view setUserInteractionEnabled:YES];
+                    });
+                    
+                }else{
+                    UIAlertController * loginErrorAlert = [UIAlertController
+                                                           alertControllerWithTitle:@"Cannot find your info"
+                                                           message:@"cannot access your info. please check your membership."
+                                                           preferredStyle:UIAlertControllerStyleAlert];
+                    [self presentViewController:loginErrorAlert animated:YES completion:nil];
+                    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];
+                        [self.view setUserInteractionEnabled:YES];
+                        [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                    }];
+                    [loginErrorAlert addAction:ok];
+                    
                 }
-                checkMail = [[dic objectForKey:[keys firstObject]] objectForKey:@"email"];
                 
-                dispatch_async(dispatch_get_main_queue(), ^{///////
+            }withCancelBlock:^(NSError * _Nonnull error) {
+                UIAlertController * loginErrorAlert = [UIAlertController
+                                                       alertControllerWithTitle:@"Cannot find your info"
+                                                       message:error.localizedDescription
+                                                       preferredStyle:UIAlertControllerStyleAlert];
+                [self presentViewController:loginErrorAlert animated:YES completion:nil];
+                UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
                     [MBProgressHUD hideHUDForView:self.view animated:YES];
                     [self.view setUserInteractionEnabled:YES];
-                    
-                    
-                    
-                    ///////////////***********************************************************************************
-                    //Manager Module
-                    NSString *email = [Request currentUser].email;
-                    app.isManager = NO;
-                    if ([email isEqualToString:checkMail]) {
-                        app.isManager = YES;
-                        app.userAccount = [FIRAuth auth].currentUser;
-                        [self loadResDataAndGo];
-                        
-                    }else{
-                        NSError *error;
-                        [[FIRAuth auth] signOut:&error];
-                        //[self loadUserDataAndGo];
-                    }
-                    ///////////////***********************************************************************************
-                    //[self loadUserDataAndGo];
-                    
-                });
+                    [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                }];
+                [loginErrorAlert addAction:ok];
             }];
-        });//Add MBProgressBar (dispatch)
+            
+        });
+        
     }
+    
 }
+
+#pragma mark - login
 - (IBAction)goFromLogin:(id)sender {
 
-    
+    [self.view endEditing:YES];
     
     NSString *strUserEmail = _txtFieldEmail.text;
     NSString *strUserPass = _txtFieldPassword.text;
@@ -172,23 +251,21 @@
                                                  if (error==nil) {
                                                      [MBProgressHUD hideHUDForView:self.view animated:YES];/////
                                                      [self.view setUserInteractionEnabled:YES];
-                                                     [self getCheckMail];
+                                                     [self loadUserDataAndGo];
                                                      
                                                  }
                                              });
                                              //after progress
                                          }];
-                                         
                                          //NSLog(@"succeed login");
                                      }
-                                     
                                      // [END_EXCLUDE]
                                  }];
         });//Add MBProgressBar (dispatch)
-        
         // [END headless_email_auth]
     }
     
+
     
 }
 - (IBAction)goSignUp:(id)sender {
@@ -201,6 +278,7 @@
     
 }
 
+#pragma mark - reset password
 - (IBAction)didRequestPasswordReset:(UIButton *)sender {
     
     
@@ -242,67 +320,164 @@
     }];
     
     [self presentViewController:requestResetPass animated:YES completion:nil];
-
-}
-
--(void)playSound:fileName{
+                                           
     
-    
-    NSString *soundPath = [[NSBundle mainBundle] pathForResource:fileName ofType:@"mp3"];
-    SystemSoundID soundID;
-    AudioServicesCreateSystemSoundID((__bridge CFURLRef)[NSURL fileURLWithPath:soundPath], &soundID);
-    AudioServicesPlaySystemSound(soundID);
     
 }
 
+#pragma mark - sign skip and go main view
 - (IBAction)SignSkip:(UIButton *)sender {
     
-    //AppDelegate *app = [UIApplication sharedApplication].delegate;
-    //[app addTabBar];
-
-
-}
-
-- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    // go to main view
+    [self.view setUserInteractionEnabled:NO];
+    [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     
-    // do whatever you have to do
+    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        
+        [[FIRAuth auth] signInAnonymouslyWithCompletion:^(FIRUser  * _Nullable user, NSError  * _Nullable error) {
+            
+            // [START_EXCLUDE]
+            if (error != nil) {
+                UIAlertController * loginErrorAlert = [UIAlertController
+                                                       alertControllerWithTitle:@"Login Failed"
+                                                       message:error.localizedDescription
+                                                       preferredStyle:UIAlertControllerStyleAlert];
+                [self presentViewController:loginErrorAlert animated:YES completion:nil];
+                UIAlertAction *ok = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                    [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                }];
+                [loginErrorAlert addAction:ok];
+                [MBProgressHUD hideHUDForView:self.view animated:YES];/////
+                [self.view setUserInteractionEnabled:YES];
+            }
+            else
+            {
+                
+                dispatch_async(dispatch_get_main_queue(), ^{///////
+                    
+                    if (error==nil) {
+                        {
+                            
+                            //current photo save
+                            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,     NSUserDomainMask, YES);
+                            NSString *documentsDirectory = [paths objectAtIndex:0];
+                            NSString *savedImagePath = [documentsDirectory stringByAppendingPathComponent:@"savedImage.png"];
+                            NSData *imageData = UIImagePNGRepresentation([UIImage imageNamed:@"person0.jpg"]);
+                            [imageData writeToFile:savedImagePath atomically:NO];
+                            //register user
+                            dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                                // Do something...
+                                
+                                
+                                FIRUser *user = [FIRAuth auth].currentUser;
+                                FIRUserProfileChangeRequest *changeRequest = [user profileChangeRequest];
+                                NSString *userId = user.uid;
+                                FIRStorage *storage = [FIRStorage storage];
+                                FIRStorageReference *storageRef = [storage reference];
+                                app.user.isCancelled = true;
+                                app.user.numberOfCoupons = 0;
+                                dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                                    FIRStorageReference *photoImagesRef = [storageRef child:[NSString stringWithFormat:@"users photo/%@/photo.jpg", [Request currentUserUid]] ];
+                                    NSData *imageData = UIImagePNGRepresentation([UIImage imageNamed:@"person0.jpg"]);
+                                    
+                                    
+                                    //image compress until size < 1 MB
+                                    int count = 0;
+                                    while ([imageData length] > 1000000) {
+                                        imageData = UIImageJPEGRepresentation([UIImage imageNamed:@"person0.jpg"], powf(0.9, count));
+                                        count++;
+                                        NSLog(@"just shrunk it once.");
+                                    }
+                                    
+                                    // Upload the file to the path "images/userID.PNG"f
+                                    
+                                    [photoImagesRef putData:imageData metadata:nil completion:^(FIRStorageMetadata *metadata, NSError *error) {
+                                        if (error != nil) {
+                                            // Uh-oh, an error occurred!
+                                            [self.view setUserInteractionEnabled:YES];
+                                            [MBProgressHUD hideHUDForView:self.view animated:YES];
+                                        } else {
+                                            // Metadata contains file metadata such as size, content-type, and download URL.
+                                            changeRequest.displayName = user.email;
+                                            changeRequest.photoURL = metadata.downloadURL;
+                                            [changeRequest commitChangesWithCompletion:^(NSError *_Nullable error) {
+                                                dispatch_async(dispatch_get_main_queue(), ^{
+                                                    if (error) {
+                                                        // An error happened.
+                                                        NSLog(@"%@", error.description);
+                                                    } else {
+                                                        // Profile updated.
+                                                        
+                                                        NSDictionary *userData = @{@"name":user.displayName?user.displayName:@"",
+                                                                                   @"email":user.email?user.email:@" ",
+                                                                                   @"photourl":[metadata.downloadURL absoluteString]?[metadata.downloadURL absoluteString]:@" ",                                                   @"userid":userId?userId:@" ",
+                                                                                   @"numberofcomments":@"0"
+                                                                                   };
+                                                        [[[[[[FIRDatabase database] reference] child:@"users"] child:userId]child:@"general info"]setValue:userData];
+                                                        //after progress
+                                                        dispatch_async(dispatch_get_main_queue(), ^{///////
+                                                            
+                                                            
+                                                            [self loadUserDataAndGo];
+                                                            [self.view setUserInteractionEnabled:YES];
+                                                            [MBProgressHUD hideHUDForView:self.view animated:YES];
+                                                            
+                                                        });
+                                                        
+                                                    }
+                                                    
+                                                });
+                                            }];
+                                            
+                                        }
+                                    }];
+                                    
+                                });
+
+                                
+                            });
+                            
+                            
+                        }
+                    }else{
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];/////
+                        [self.view setUserInteractionEnabled:YES];
+                        UIAlertController * loginErrorAlert = [UIAlertController
+                                                               alertControllerWithTitle:@"Login Failed"
+                                                               message:error.localizedDescription
+                                                               preferredStyle:UIAlertControllerStyleAlert];
+                        [self presentViewController:loginErrorAlert animated:YES completion:nil];
+                        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                            [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                        }];
+                        [loginErrorAlert addAction:ok];
+                    }
+                });
+                
+                
+                //NSLog(@"succeed login");
+            }
+        }];
+    });//Add MBProgressBar (dispatch)
     
-    [textField resignFirstResponder];
-    return YES;
-}
-- (void) drawPlaceholderInRect:(CGRect)rect{
-    [[UIColor whiteColor] setFill];
-    //[[self placeholder] drawInRect:rect withFont:[UIFont systemFontOfSize:16]];
-    
-}
-- (void)viewWillAppear:(BOOL)animated{
-    [self.view setUserInteractionEnabled:YES];
-    if (app.user.email !=nil) {
-        self.txtFieldEmail.text = app.user.email;
-        //self.txtFieldPassword.text = app.user.userId;
-    }
-}
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+
 }
 
+#pragma mark - load data from backend
 - (void)loadUserDataAndGo{
-    app = [UIApplication sharedApplication].delegate;
     app.user.userId = [NSString stringWithFormat:@"%@", [Request currentUserUid]];
     app.arrPayDictinaryData = [[NSMutableArray alloc]init];
     
     childCount = 1;
     [self.view setUserInteractionEnabled:NO];
     [MBProgressHUD showHUDAddedTo:self.view animated:YES];
-    [self loadResData];
+    
     dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         
         //get manager data
         app.user.userId = [NSString stringWithFormat:@"%@", [Request currentUserUid]];
         NSString *userID = app.user.userId;
-        FIRDatabaseReference *refManagerInfor = [[[Request dataref] child:@"manager"]child: userID];
-        //FIRDatabaseReference *ref = [Request dataref];
+        FIRDatabaseReference *refManagerInfor = [[[[Request dataref] child:@"users"]child: userID] child:@"general info"];
         [refManagerInfor observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
             if (snapshot.exists) {
                 app.user.name = [(NSDictionary*)(snapshot.value) objectForKey:@"name"];
@@ -312,38 +487,43 @@
                 app.user.cardCVID = [(NSDictionary*)(snapshot.value) objectForKey:@"cardcvid"];
                 app.user.cardDate = [(NSDictionary*)(snapshot.value) objectForKey:@"carddate"];
                 app.user.cardNumber = [(NSDictionary*)(snapshot.value) objectForKey:@"cardnumber"];
-        
-        FIRDatabaseReference* refPay = [[[FIRDatabase database] reference] child:@"users"];
-        //[self loadResData];
-        [refPay observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-            NSDictionary*dic = snapshot.value;
-            NSArray *keys;
-            if (![dic isKindOfClass:[NSNull class]]) {
-                keys = dic.allKeys;
-            }
-            
-            
-                NSDictionary *payData = [[dic objectForKey:[Request currentUserUid]] objectForKey:@"pay info"];
-                NSString *userName = (NSString*)[[[dic objectForKey:[Request currentUserUid]] objectForKey:@"general info"] objectForKey:@"name"];
-                NSDictionary* PersonPayData = [[NSDictionary alloc]initWithObjectsAndKeys:userName, @"name", payData,@"pay info", nil];
-                [app.arrPayDictinaryData addObject:PersonPayData];
+                
+                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+                NSTimeZone *gmt = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
+                [dateFormatter setTimeZone:gmt];
+                app.user.dateCycleStart  = [dateFormatter dateFromString:[(NSDictionary*)(snapshot.value) objectForKey:@"dateCycleStart"]];
+                int numberOfMonths = [self checkDateInterval:app.user.dateCycleStart];
+                NSString *isCancelled = [(NSDictionary*)(snapshot.value) objectForKey:@"iscancelled"];
+                if (numberOfMonths>=1) {
+                    isCancelled = @"true";
+                }
+                
+                app.user.isCancelled = [isCancelled boolValue];
+                app.user.numberOfCoupons = [[(NSDictionary*)(snapshot.value) objectForKey:@"numberOfCoupons"] intValue];
             dispatch_async(dispatch_get_main_queue(), ^{
                 //go maim workspace
                 [MBProgressHUD hideHUDForView:self.view animated:YES];
                 [self.view setUserInteractionEnabled:YES];
-                [app addTabBar];
+                [self loadResData];
+                [self loadPayData];
+                
             });
-        }];
+        
             }else{
+                
                 UIAlertController * loginErrorAlert = [UIAlertController
-                                                       alertControllerWithTitle:@"Cannot find manager info"
-                                                       message:@"you cannot access manager info. please check your manager membership."
+                                                       alertControllerWithTitle:@"Cannot find your info"
+                                                       message:@"cannot access your info. please check your info."
                                                        preferredStyle:UIAlertControllerStyleAlert];
                 [self presentViewController:loginErrorAlert animated:YES completion:nil];
                 UIAlertAction *ok = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-                    [MBProgressHUD hideHUDForView:self.view animated:YES];
-                    [self.view setUserInteractionEnabled:YES];
                     [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [MBProgressHUD hideHUDForView:self.view animated:YES];
+                        [self.view setUserInteractionEnabled:YES];
+                    });
+                    
                 }];
                 [loginErrorAlert addAction:ok];
                 
@@ -355,25 +535,56 @@
 
 }
 
+-(int)checkDateInterval: (NSDate*)RegisterDate{
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+    NSTimeZone *gmt = [NSTimeZone timeZoneWithAbbreviation:@"GMT"];
+    [dateFormatter setTimeZone:gmt];
+    
+    //internet time
+    NSURL *url = [NSURL URLWithString:@"http://www.timeapi.org/utc/now"];
+    NSString *str = [[NSString alloc] initWithContentsOfURL:url usedEncoding:Nil error:Nil];
+    
+    str = [str stringByReplacingOccurrencesOfString:@"T" withString:@" "];
+    str = [str stringByReplacingOccurrencesOfString:@"+00:00" withString:@""];
+    
+    
+    NSDate *nowGMTDate = [dateFormatter dateFromString:str];
+    
+    int numberOfMonth = (int)[[[NSCalendar currentCalendar] components: NSCalendarUnitMonth
+                                                               fromDate: RegisterDate
+                                                                 toDate: nowGMTDate
+                                                                options: 0] month];
+    return numberOfMonth;
+}
+
 -(void)loadResData{
-    app = [UIApplication sharedApplication].delegate;
-    app.arrRegisteredDictinaryRestaurantData = [[NSMutableArray alloc]init];
+    
+    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         //get all restaurant info
         FIRDatabaseReference* ref = [[[FIRDatabase database] reference] child:@"restaurants"];
-        [ref observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-            NSDictionary*dic = snapshot.value;
+        [ref observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
             
-            NSArray *keys;
-            if (![dic isKindOfClass:[NSNull class]]) {
-                keys = dic.allKeys;
-            }
+            NSDictionary*dic = snapshot.value;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSArray *keys;
+                if (![dic isKindOfClass:[NSNull class]]) {
+                    keys = dic.allKeys;
+                }
             //////////////////////////////////////___correct
-            for (int countData = 0;keys.count>countData;countData++) {
-                NSDictionary *restaurantData = [dic objectForKey:[keys objectAtIndex:countData]];
-                [app.arrRegisteredDictinaryRestaurantData addObject:restaurantData];
-            }
+                app.arrRegisteredDictinaryRestaurantData = [[NSMutableArray alloc]init];
+                for (int countData = 0;keys.count>countData;countData++) {
+                    NSDictionary *restaurantData = [dic objectForKey:[keys objectAtIndex:countData]];
+                    [app.arrRegisteredDictinaryRestaurantData addObject:restaurantData];
+                }
+                if (!app.boolOncePassed) {
+                    app.boolOncePassed = true;
+                    [app addTabBar];
+                }
+                
+            });
         }];
 
     });
@@ -381,135 +592,43 @@
     
 
 }
-
-- (void)loadResDataAndGo{
-    app = [UIApplication sharedApplication].delegate;
-    app.arrRegisteredDictinaryRestaurantData = [[NSMutableArray alloc]init];
+- (void)loadPayData{
+    //get users' pay data
     app.arrPayDictinaryData = [[NSMutableArray alloc]init];
-    [self.view setUserInteractionEnabled:NO];
-    [MBProgressHUD showHUDAddedTo:self.view animated:YES];
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            
-            //get all restaurant info
-            FIRDatabaseReference* ref = [[[FIRDatabase database] reference] child:@"restaurants"];
-            [ref observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-                if (snapshot.exists) {
-                    NSDictionary*dic = snapshot.value;
-                    
-                    NSArray *keys;
-                    if (![dic isKindOfClass:[NSNull class]]) {
-                        keys = dic.allKeys;
-                    }
-                    //////////////////////////////////////___correct
-                    for (int countData = 0;keys.count>countData;countData++) {
-                        NSDictionary *restaurantData = [dic objectForKey:[keys objectAtIndex:countData]];
-                        [app.arrRegisteredDictinaryRestaurantData addObject:restaurantData];
-                    }
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [app addTabBar];
-                    });
-                }else{
-                    UIAlertController * loginErrorAlert = [UIAlertController
-                                                           alertControllerWithTitle:@"Cannot find restaurant info"
-                                                           message:@"you cannot access restaurant info. please trya again."
-                                                           preferredStyle:UIAlertControllerStyleAlert];
-                    [self presentViewController:loginErrorAlert animated:YES completion:nil];
-                    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-                        [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
-                    }];
-                    [loginErrorAlert addAction:ok];
-                }
-
-            }];
+    FIRDatabaseReference* refPay = [[[[FIRDatabase database] reference] child:@"users"] child:app.user.userId];
+    [refPay observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+        NSDictionary*dic = snapshot.value;
+        
+            NSDictionary *payData = [dic objectForKey:@"pay info"];
             
             
-            //get users' pay data
-            FIRDatabaseReference* refPay = [[[FIRDatabase database] reference] child:@"users"];
-            //[self loadResData];
-            [refPay observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-                NSDictionary*dic = snapshot.value;
-                NSArray *keys;
-                if (![dic isKindOfClass:[NSNull class]]) {
-                    keys = dic.allKeys;
-                }
+            NSMutableArray * dataarray = [[NSMutableArray alloc]init];
+            NSArray *keysPay = [payData allKeys];
+            NSArray *values = [payData allValues];
+            
+            
+            for (int count = 0 ; keysPay.count > count; count++) {
+                NSString *datetext = [NSString stringWithFormat:@"%@", [keysPay objectAtIndex:count]] ;
                 
-
-                for (int countData = 0;keys.count>countData;countData++) {
-                    NSDictionary *payData = [[dic objectForKey:[keys objectAtIndex:countData]] objectForKey:@"pay info"];
-                    
-                    
-                    NSMutableArray * dataarray = [[NSMutableArray alloc]init];
-                    NSArray *keysPay = [payData allKeys];
-                    NSArray *values = [payData allValues];
-                    
-                    
-                    for (int count = 0 ; keysPay.count > count; count++) {
-                        NSString *datetext = [NSString stringWithFormat:@"%@", [keysPay objectAtIndex:count]] ;
-                        datetext = [NSString stringWithFormat:@"%@/%@/%@", [datetext substringWithRange:NSMakeRange(5, 2)], [datetext substringWithRange:NSMakeRange(8, 2)], [datetext substringWithRange:NSMakeRange(0, 4)]];
-                        
-                        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                        [dateFormatter setDateFormat:@"MM/dd/yyyy"];
-                        NSDate *date = [dateFormatter dateFromString:datetext];
-                        NSDictionary *dicpay = [[NSDictionary alloc]initWithObjectsAndKeys:date, @"date", [values objectAtIndex:count], @"amount",  nil];
-                        [dataarray addObject:dicpay];
-                    }
-                    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey: @"date" ascending: NO];
-                    dataarray = [[NSMutableArray alloc]initWithArray:[dataarray sortedArrayUsingDescriptors:[NSArray arrayWithObject:sortDescriptor]]];
-                    
-                    NSString *userName = (NSString*)[[[dic objectForKey:[keys objectAtIndex:countData]] objectForKey:@"general info"] objectForKey:@"name"];
-                    NSString *userPhotoURL = (NSString*)[[[dic objectForKey:[keys objectAtIndex:countData]] objectForKey:@"general info"] objectForKey:@"photourl"];
-                    NSDictionary* PersonPayData = [[NSDictionary alloc]initWithObjectsAndKeys:userName, @"name", dataarray,@"pay info", userPhotoURL,@"photourl",  nil];
-                    [app.arrPayDictinaryData addObject:PersonPayData];
-                    }
-
-                }];
-
-            //get manager data
-            app.user.userId = [NSString stringWithFormat:@"%@", [Request currentUserUid]];
-            NSString *userID = app.user.userId;
-            FIRDatabaseReference *refManagerInfor = [[[Request dataref] child:@"manager"]child: userID];
-            //FIRDatabaseReference *ref = [Request dataref];
-            [refManagerInfor observeEventType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-                
-                    
-                
-                    
-                if (snapshot.exists) {
-                    app.user.name = [(NSDictionary*)(snapshot.value) objectForKey:@"name"];
-                    app.user.userId = userID;
-                    app.user.email = [(NSDictionary*)(snapshot.value) objectForKey:@"email"];
-                    app.user.photoURL = [NSURL URLWithString:[(NSDictionary*)(snapshot.value) objectForKey:@"photourl"]];
-                    app.user.cardCVID = [(NSDictionary*)(snapshot.value) objectForKey:@"cardcvid"];
-                    app.user.cardDate = [(NSDictionary*)(snapshot.value) objectForKey:@"carddate"];
-                    app.user.cardNumber = [(NSDictionary*)(snapshot.value) objectForKey:@"cardnumber"];
-                    
-            
-            
-                }else{
-                    UIAlertController * loginErrorAlert = [UIAlertController
-                                                           alertControllerWithTitle:@"Cannot find manager info"
-                                                           message:@"you cannot access manager info. please check your manager membership."
-                                                           preferredStyle:UIAlertControllerStyleAlert];
-                    [self presentViewController:loginErrorAlert animated:YES completion:nil];
-                    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-                        
-                        [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
-                        
-                    }];
-                    
-                    [loginErrorAlert addAction:ok];
-                    
-                }
-                    
-                    [MBProgressHUD hideHUDForView:self.view animated:YES];
-                    [self.view setUserInteractionEnabled:YES];
-                    
-                
-            }];
-        });
+                NSDate *date = [self date_from_string:datetext];
+                NSDictionary *dicpay = [[NSDictionary alloc]initWithObjectsAndKeys:date, @"date", [values objectAtIndex:count], @"amount",  nil];
+                [dataarray addObject:dicpay];
+            }
+            NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey: @"date" ascending: NO];
+            dataarray = [[NSMutableArray alloc]initWithArray:[dataarray sortedArrayUsingDescriptors:[NSArray arrayWithObject:sortDescriptor]]];
+            NSDictionary* PersonPayData = [[NSDictionary alloc]initWithObjectsAndKeys:app.user.name, @"name", dataarray,@"pay info", app.user.photoURL,@"photourl",  nil];
+            [app.arrPayDictinaryData addObject:PersonPayData];
+        
+    }];
     
-    
+
 }
 
+-(NSDate*)date_from_string: (NSString*)string{
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"MM_dd_yyyy_HH_mm_ss"];
+    NSDate *dateReturn = (__bridge NSDate *)([dateFormatter dateFromString:string]?[string isEqualToString:@"defaultTime"]:nil);
+    return dateReturn;
+}
 
 @end

@@ -1,10 +1,4 @@
-//
-//  actvatedRestaurantListViewController.m
-//  disCout
-//
-//  Created by Theodor Hedin on 9/25/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 
 #import "Request.h"
 #import "AppDelegate.h"
@@ -33,14 +27,15 @@
 @end
 
 @implementation actvatedRestaurantListViewController
-
+#pragma mark - set environment
 - (void)viewDidLoad {
     
     [super viewDidLoad];
     app = [UIApplication sharedApplication].delegate;
     
     
-    checkScroll = false;    
+    checkScroll = false;
+    
     [self.tabBarItem setSelectedImage:[[UIImage imageNamed:@"Activity_Active.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     [self.tabBarItem setImage:[[UIImage imageNamed:@"Activity_Inactive.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     [self.tabBarItem setTitle:@"ACTIVITY"];
@@ -64,22 +59,14 @@
     [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     [self.view addGestureRecognizer:self.revealViewController.tapGestureRecognizer];
 }
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
 
+#pragma mark - restaurant collectionView delegate
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
     
     return app.arrRegisteredDictinaryRestaurantData.count;
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath{
-    
-    //retrieve registered restaurants
-    
-    
-    
     
     static NSString *identifier = @"resCell";
     
@@ -115,15 +102,6 @@
     
     UIImageView *regImageView = (UIImageView *)[cell viewWithTag:110];
     [regImageView setHidden:NO];
-//    for (int i = 0; registeredRestaurants.count>i; i++) {
-//        
-//        if ([[muarResName objectAtIndex:indexPath.row] isEqualToString:[registeredRestaurants objectAtIndex:i]]) {
-//            [regImageView setHidden:NO];
-//            
-//            continue;
-//        }
-//        
-//    }
     
     
     return cell;
@@ -141,16 +119,20 @@
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
     return CGSizeMake(collectionView.frame.size.width, 100);
 }
-- (IBAction)exchangeMap:(UIButton *)sender {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+
+#pragma mark - exchange map
+- (IBAction)exchangeMap:(UIButton *)sender{
+UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     LocationMapOfRestaurants *restaurantInfoViewController = [storyboard instantiateViewControllerWithIdentifier:@"LocationMapOfRestaurants"];
     [self.navigationController pushViewController:restaurantInfoViewController animated:YES];
 }
+#pragma mark - sort
 - (IBAction)Sort:(UIButton *)sender {
     NSSortDescriptor * descriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES];
     app.arrRegisteredDictinaryRestaurantData = [[NSMutableArray alloc]initWithArray:[app.arrRegisteredDictinaryRestaurantData sortedArrayUsingDescriptors:@[descriptor]]];
     [self.tableResList reloadData];
 }
+#pragma mark - go side
 - (IBAction)goSlide:(UIButton *)sender {
     [self.navigationController.revealViewController rightRevealToggle:nil];
 }

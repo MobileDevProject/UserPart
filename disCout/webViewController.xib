@@ -1,9 +1,18 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10116" systemVersion="15D21" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11521.1" systemVersion="16A323" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11517.1"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="AvenirNextLTPro-Medium_0.ttf">
+            <string>AvenirNextLTPro-Medium</string>
+        </array>
+        <array key="GRAYSTROKE REGULAR.otf">
+            <string>GRAYSTROKE</string>
+        </array>
+    </customFonts>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="webViewController">
             <connections>
@@ -12,9 +21,68 @@
         </placeholder>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
-            <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <subviews>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="0Sc-xQ-hPl" userLabel="Topbar">
+                    <subviews>
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DiscOut" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="XI0-Hw-EML">
+                            <constraints>
+                                <constraint firstAttribute="width" constant="93" id="7rK-b4-jEj"/>
+                                <constraint firstAttribute="height" constant="21" id="Cdc-ec-RWS"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" name="GRAYSTROKE" family="GRAYSTROKE" pointSize="17"/>
+                            <color key="textColor" red="0.94901960780000005" green="0.39607843139999999" blue="0.1333333333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="YVA-0j-Xoe">
+                            <constraints>
+                                <constraint firstAttribute="width" constant="60" id="uzP-eQ-Dp7"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" name="AvenirNextLTPro-Medium" family="Avenir Next LT Pro" pointSize="17"/>
+                            <state key="normal" title="Back">
+                                <color key="titleColor" red="0.92549019610000005" green="0.30588235289999999" blue="0.1058823529" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            </state>
+                            <connections>
+                                <action selector="goBack:" destination="-1" eventType="touchUpInside" id="3Ki-px-nqu"/>
+                            </connections>
+                        </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7q7-g4-dlP">
+                            <constraints>
+                                <constraint firstAttribute="width" constant="30" id="DvW-bf-iqe"/>
+                                <constraint firstAttribute="height" constant="30" id="aJw-jc-XoE"/>
+                            </constraints>
+                            <state key="normal" backgroundImage="FilterWithCuisine.png"/>
+                            <connections>
+                                <action selector="goSideMenu:" destination="-1" eventType="touchUpInside" id="iEs-gm-5Ko"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                    <color key="backgroundColor" red="0.21176470589999999" green="0.21176470589999999" blue="0.21176470589999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="70" id="3YO-FM-bQ5"/>
+                        <constraint firstItem="7q7-g4-dlP" firstAttribute="centerY" secondItem="0Sc-xQ-hPl" secondAttribute="centerY" id="5R0-eo-GeK"/>
+                        <constraint firstItem="YVA-0j-Xoe" firstAttribute="height" secondItem="0Sc-xQ-hPl" secondAttribute="height" id="9Rm-FT-rgp"/>
+                        <constraint firstItem="YVA-0j-Xoe" firstAttribute="centerY" secondItem="0Sc-xQ-hPl" secondAttribute="centerY" id="AcY-pT-GPy"/>
+                        <constraint firstItem="XI0-Hw-EML" firstAttribute="centerY" secondItem="0Sc-xQ-hPl" secondAttribute="centerY" id="JOT-KP-NGF"/>
+                        <constraint firstItem="XI0-Hw-EML" firstAttribute="centerX" secondItem="0Sc-xQ-hPl" secondAttribute="centerX" id="nu4-7i-mnf"/>
+                        <constraint firstItem="YVA-0j-Xoe" firstAttribute="leading" secondItem="0Sc-xQ-hPl" secondAttribute="leading" constant="8" id="q7u-qC-gAp"/>
+                        <constraint firstAttribute="trailing" secondItem="7q7-g4-dlP" secondAttribute="trailing" constant="8" id="vLs-I3-xDi"/>
+                    </constraints>
+                </view>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="0Sc-xQ-hPl" firstAttribute="width" secondItem="i5M-Pr-FkT" secondAttribute="width" id="4aL-Ia-lZx"/>
+                <constraint firstItem="0Sc-xQ-hPl" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="TAL-rR-SmU"/>
+                <constraint firstItem="0Sc-xQ-hPl" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="kbp-03-3Qy"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <nil key="simulatedTopBarMetrics"/>
+            <point key="canvasLocation" x="57.5" y="59.5"/>
         </view>
     </objects>
+    <resources>
+        <image name="FilterWithCuisine.png" width="50" height="50"/>
+    </resources>
 </document>

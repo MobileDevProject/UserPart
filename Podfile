@@ -11,6 +11,8 @@ target 'disCout' do
     pod ‘Firebase/Database’
     pod ‘Firebase/Storage’
     pod 'SDWebImage', '~>3.8'
+    pod 'PayPal-iOS-SDK'
+    pod 'NHNetworkTime'
 
   target 'disCoutTests' do
     inherit! :search_paths

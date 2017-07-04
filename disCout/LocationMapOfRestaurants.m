@@ -1,10 +1,4 @@
-//
-//  LocationMapOfRestaurants.m
-//  disCout
-//
-//  Created by Theodor Hedin on 7/29/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import "SWRevealViewController.h"
 #import "LocationMapOfRestaurants.h"
 #import <MapKit/MapKit.h>
@@ -23,6 +17,7 @@
 #define METERS_PER_MILE 1609.344
 
 @property (weak, nonatomic) IBOutlet MKMapView *mapView;
+@property (strong, nonatomic) IBOutlet UISlider *slideControlDistance;
 @property(nonatomic,strong) CLLocationManager *locationManager;
 @property(nonatomic,strong) NSMutableArray *annotations;
 @property BOOL mapDidLoadForFirstTime;
@@ -40,29 +35,25 @@
 
 -(MKAnnotationView *) mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {
     MKPinAnnotationView *MyPin=[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"current"];
-    //MyPin.pinColor = MKPinAnnotationColorPurple;
-    
     UIButton *advertButton = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
-    //[advertButton addTarget:self action:@selector(button:) forControlEvents:UIControlEventTouchUpInside];
     MyPin.rightCalloutAccessoryView = advertButton;
-     MyPin.draggable = YES;
-     MyPin.animatesDrop=TRUE;
-     MyPin.canShowCallout = YES;
+    MyPin.draggable = YES;
+    MyPin.animatesDrop=TRUE;
+    MyPin.canShowCallout = YES;
     MyPin.highlighted = NO;
-    //MyPin.image = [UIImage imageNamed:@"Pin.png"];
-    
     return MyPin;
+    
 }
 
 - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView *)view{
-    //int d = 9;
+    
 }
 - (IBAction)goSideMenu:(UIButton *)sender {
     [self.view addGestureRecognizer:self.revealViewController.tapGestureRecognizer];
     [self.navigationController.revealViewController rightRevealToggle:nil];
 }
 - (void)mapView:(MKMapView *)mapView didDeselectAnnotationView:(MKAnnotationView *)view{
-    //int  nn = 9;
+
 }
 - (void)mapView:(MKMapView *)mapView annotationView:(MKAnnotationView *)view calloutAccessoryControlTapped:(UIControl *)control{
     self.app.selectedResNumberFromResList = [(Annotation*)[view annotation] number];
@@ -100,7 +91,20 @@
     [self.navigationController popViewControllerAnimated:YES];
 }
 
+- (IBAction)ChangeDistanceSearch:(UISlider *)sender {
+    
+    [self.searchRadius setFrame:CGRectMake(self.searchRadius.frame.origin.x - sender.frame.size.width/100.0f, self.searchRadius.frame.origin.x, self.searchRadius.frame.size.width, self.searchRadius.frame.size.height)];
+    preValue = sender.value;
+    if ((int)(sender.value) % 5 == 0) {
+        [mapView removeOverlay:[[mapView overlays] firstObject]];
+        float lati = [[(NSDictionary*)[arrRestaurantData firstObject] objectForKey:@"latitude"] floatValue];
+        float longgi = [[(NSDictionary*)[arrRestaurantData firstObject] objectForKey:@"longitude"] floatValue];
+        CLLocationCoordinate2D circleMiddlePoint = CLLocationCoordinate2DMake(lati, longgi);
+        MKCircle *circle = [MKCircle circleWithCenterCoordinate:circleMiddlePoint radius:sender.value*300];
+        [mapView addOverlay: circle];
+    }
 
+}
 - (void)viewWillAppear:(BOOL)animated{
     _app = [UIApplication sharedApplication].delegate;
     arrRestaurantData = [[NSMutableArray alloc]init];
@@ -138,20 +142,13 @@
         [ann setValue:ann.url forKey:@"url"];
         ann.coordinate = Bridge.center;
         [mapView addAnnotation:ann];
-        //[self.arrAnnotations addObject:ann];
+        
     }
     float lati = [[(NSDictionary*)[arrRestaurantData firstObject] objectForKey:@"latitude"] floatValue];
     float longgi = [[(NSDictionary*)[arrRestaurantData firstObject] objectForKey:@"longitude"] floatValue];
-    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2DMake(lati, longgi), 2500, 2500);
+    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2DMake(lati, longgi), 500, 500);
     [self.mapView setRegion:region animated:YES];
-    [mapView removeOverlay:[[mapView overlays] firstObject]];
-    CLLocationCoordinate2D circleMiddlePoint = CLLocationCoordinate2DMake(lati, longgi);
-    MKCircle *circle = [MKCircle circleWithCenterCoordinate:circleMiddlePoint radius:1500];
-    [mapView addOverlay: circle];
 
 }
-
-
-
 
 @end

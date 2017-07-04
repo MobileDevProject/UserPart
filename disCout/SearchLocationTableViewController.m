@@ -1,10 +1,4 @@
-//
-//  SearchLocationTableViewController.m
-//  disCout
-//
-//  Created by Theodor Hedin on 8/7/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import "MapViewController.h"
 #import <MapKit/MapKit.h>
 #import "SearchLocationTableViewController.h"
@@ -36,14 +30,7 @@ static NSString *kCellIdentifier = @"cellIdentifier";
 - (BOOL)shouldAutorotate {
     return YES;
 }
-/*
-- (NSUInteger)supportedInterfaceOrientations {
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-        return UIInterfaceOrientationMaskAll;
-    else
-        return UIInterfaceOrientationMaskAllButUpsideDown;
-}
-*/
+
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     MapViewController *mapViewController = segue.destinationViewController;
     

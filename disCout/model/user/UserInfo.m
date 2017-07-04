@@ -1,13 +1,3 @@
-//
-//  UserInfo.m
-//  OnGo
-//
-//  Created by star on 2/15/16.
-//  Copyright © 2016 star. All rights reserved.
-//
-
-//#define CONFIG_KEY_USER_INFO        @"UserInfo"
-
 
 #import "UserInfo.h"
 
@@ -29,6 +19,7 @@
         self.cardNumber = dict[@"card number"] ? dict[@"card number"] : nil;
         self.payData = dict[@"pay info"] ? dict[@"pay info"] : nil;
         self.isCancelled = dict[@"isCancelled"];
+        self.numberOfCoupons = dict[@"numberOfCoupons"];
     }
     
     return self;

@@ -1,10 +1,4 @@
-//
-//  Request.m
-//  disCout
-//
-//  Created by Theodor Hedin on 9/25/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import "AppDelegate.h"
 #import "Request.h"
 FIRDatabaseReference *ref;
@@ -26,77 +20,17 @@ FIRDatabaseReference *ref;
 + (void)saveUserEmail:email{
     FIRDatabaseReference* ref = [[[[[[FIRDatabase database] reference] child:@"users"] child:[self currentUserUid]]child:@"general info" ] child:@"email"] ;
     [ref setValue:(NSString*)email];
-    //[[[[[self dataref] child:@"users"] child:[self currentUserUid] ] child:@"email"] setValue:(NSString*)email];
+
+}
++ (void)saveNumberOfCoupons:numbers{
+    FIRDatabaseReference* ref = [[[[[[FIRDatabase database] reference] child:@"users"] child:[self currentUserUid]]child:@"general info" ] child:@"numberOfCoupons"] ;
+    [ref setValue:(NSString*)numbers];
+
 }
 + (void)saveUserName:name{
     [[[[[[[FIRDatabase database] reference] child:@"users"] child:[self currentUserUid]]child:@"general info" ] child:@"name"] setValue:(NSString*)name];
 }
 
-//save manager
-+ (void)saveManagerEmail:email{
-    AppDelegate *app = [UIApplication sharedApplication].delegate;
-    FIRDatabaseReference* ref = [[[[[FIRDatabase database] reference] child:@"manager"] child:app.user.userId]child:@"email"] ;
-    [ref setValue:(NSString*)email];
-}
-+ (void)saveManagerName:name{
-    AppDelegate *app = [UIApplication sharedApplication].delegate;
-    FIRDatabaseReference* ref = [[[[[FIRDatabase database] reference] child:@"manager"] child:app.user.userId]child:@"name"] ;
-    [ref setValue:(NSString*)name];
-}
-//+ (void)getUserName{
-//    [[[[[self dataref] child:@"users"] child:[self currentUserUid] ] child:@"name"] ];
-//}
-+ (NSError*)saveManagerCardInfo:number cvid:cvid date:date{
-    AppDelegate *app = [UIApplication sharedApplication].delegate;
-    [[[[[self dataref] child:@"manager"] child:[self currentUserUid] ]child:@"cardcvid"] setValue:cvid withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-        app.Acterror = error;
-    }];
-    [[[[[self dataref] child:@"manager"] child:[self currentUserUid] ]child:@"cardnumber"] setValue:number withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-        app.Acterror = error;
-    }];
-    [[[[[self dataref] child:@"manager"] child:[self currentUserUid] ] child:@"carddate"] setValue:date withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-        app.Acterror = error;
-    }];
-    return app.Acterror;
-}
-+ (void)getManagerCardInfoFromDatabase{
-    AppDelegate *app = [UIApplication sharedApplication].delegate;
-    FIRDatabaseReference *cvidref = [[[[self dataref] child:@"manager"] child:[self currentUserUid] ]child:@"cardcvid"];
-    [cvidref observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-        app.user.cardCVID = snapshot.value;
-    }];
-    
-    FIRDatabaseReference *numberref = [[[[self dataref] child:@"manager"] child:[self currentUserUid] ]child:@"cardnumber"];
-    [numberref observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-        app.user.cardCVID = snapshot.value;
-    }];
-    FIRDatabaseReference *dateref = [[[[self dataref] child:@"manager"] child:[self currentUserUid] ]child:@"carddate"];
-    [dateref observeSingleEventOfType:FIRDataEventTypeValue withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-        app.user.cardCVID = snapshot.value;
-    }];
-
-}
-+ (void)upDateManagerAccount:mangerID email:email name:name{
-    AppDelegate *app = [UIApplication sharedApplication].delegate;
-    FIRDatabaseReference* ref = [[Request dataref]child:@"manager"];
-            NSString* cardCVID = app.user.cardCVID; // [dic objectForKey:@"cardcvid"];
-            NSString* cardNumber = app.user.cardNumber; // [dic objectForKey:@"cardnumber"];
-            NSString* cardDate = app.user.cardDate; // [dic objectForKey:@"carddate"];
-            NSString* photoURL = [app.user.photoURL absoluteString]; //[dic objectForKey:@"photourl"];
-            photoURL = photoURL ? photoURL: @" ";
-                NSString *key = [[ref child:@"manager"] child:mangerID].key;
-                NSDictionary *post = @{@"email": email,
-                                       @"name": name,
-                                       @"photourl": photoURL,
-                                       @"cardcvid": cardCVID,
-                                       @"cardnumber": cardNumber,
-                                       @"carddate": cardDate
-                                       };
-                NSDictionary *childUpdates = @{key: post};
-                [ref updateChildValues:childUpdates];
-
-}
-//user
 + (NSError*)saveCardInfo:number cvid:cvid date:date membership:membership{
     AppDelegate *app = [UIApplication sharedApplication].delegate;
     [[[[[[self dataref] child:@"users"] child:[self currentUserUid] ]child:@"general info" ] child:@"card cvid"] setValue:cvid withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
@@ -115,20 +49,37 @@ FIRDatabaseReference *ref;
         
     }];
     return app.Acterror;
+    
 }
+
 + (void)cancelMembership{
-    [[[[[[self dataref] child:@"users"] child:[self currentUserUid] ]child:@"general info" ] child:@"iscancelled"] setValue:@"false" withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+    [[[[[[self dataref] child:@"users"] child:[self currentUserUid] ]child:@"general info" ] child:@"iscancelled"] setValue:@"true" withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
         
     }];
+    
 }
-//manager restaurant
+
++ (void)saveUsedCoupon:dateString ResName:ResName{
+    NSString *registerDate = (NSString*)dateString;
+    NSString* resName = (NSString*)ResName;
+    [[[[[[self dataref] child:@"users"] child:[self currentUserUid] ]child:@"pay info"] child:registerDate] setValue:resName withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+        
+    }];
+    
+    AppDelegate *app = [UIApplication sharedApplication].delegate;
+    [[[[[[self dataref] child:@"users"] child:[self currentUserUid] ]child:@"general info"] child:@"numberOfCoupons"] setValue:[NSString stringWithFormat:@"%d", app.user.numberOfCoupons]];
+    
+}
+
 + (void)saveRestaurantData:dicRestaurantData{
     
     FIRDatabaseReference *allRestaurants = [[self dataref] child:@"restaurants"];
     NSString *restaurantID = [(NSDictionary*)dicRestaurantData objectForKey:@"name"];
     NSDictionary *registerData = [NSDictionary dictionaryWithObjectsAndKeys:restaurantID,dicRestaurantData, nil];
     [allRestaurants setValue:registerData];
+    
 }
+
 + (void)saveUserPhoto:image{
     FIRStorage *storage = [FIRStorage storage];
     FIRStorageReference *storageRef = [storage reference];
@@ -151,7 +102,7 @@ FIRDatabaseReference *ref;
         } else {
             // Metadata contains file metadata such as size, content-type, and download URL.
             app.user.photoURL = metadata.downloadURL;
-            FIRDatabaseReference* savedResData = [[[[[FIRDatabase database] reference]child:@"manager"] child:[Request currentUserUid]]child:@"photoURL"];
+            FIRDatabaseReference* savedResData = [[[[[[FIRDatabase database] reference]child:@"users"] child:[Request currentUserUid]]child:@"general info"]child:@"photourl"];
             [savedResData setValue:[app.user.photoURL absoluteString]];
             
         }
@@ -180,6 +131,10 @@ FIRDatabaseReference *ref;
     }];
 }
 
++ (void)saveUsedCouponData{
+    
+    
+}
 
 
 @end

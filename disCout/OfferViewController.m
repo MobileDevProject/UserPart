@@ -1,10 +1,4 @@
-//
-//  OfferViewController.m
-//  disCout
-//
-//  Created by Theodor Hedin on 10/8/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 
 #import "OfferViewController.h"
 #import "SWRevealViewController.h"
@@ -18,7 +12,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    //[self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     // Do any additional setup after loading the view.
 }
 - (void)viewWillAppear:(BOOL)animated{
@@ -39,6 +32,7 @@
 }
 - (IBAction)goBack:(UIButton *)sender {
     [self.navigationController popViewControllerAnimated:YES];
+    [self dismissModalViewControllerAnimated:YES];
 }
 
 - (IBAction)goSlide:(UIButton *)sender {

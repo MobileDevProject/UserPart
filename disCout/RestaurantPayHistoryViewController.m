@@ -1,10 +1,4 @@
-//
-//  RestaurantPayHistoryViewController.m
-//  disCout
-//
-//  Created by Theodor Hedin on 9/25/16.
-//  Copyright © 2016 THedin. All rights reserved.
-//
+
 #import "Request.h"
 #import "AppDelegate.h"
 #import "SWRevealViewController.h"
@@ -22,29 +16,65 @@
 @property (strong, nonatomic) IBOutlet UILabel *JobID;
 @property (strong, nonatomic) IBOutlet UILabel *Membership;
 @property (strong, nonatomic) IBOutlet UILabel *UserName;
+@property (strong, nonatomic) IBOutlet UIImageView *imgIsPaid;
 
 @end
 
 @implementation RestaurantPayHistoryViewController
-
+#pragma mark - set environment
 - (void) viewDidLoad{
     app = [UIApplication sharedApplication].delegate;
+    
+}
+- (void) viewWillAppear:(BOOL)animated{
+    
+    [self.imgIsPaid setHidden:app.user.isCancelled];
+    
     childCount = 1;
-    self.JobID.text = [Request currentUserUid];
+    //membership
+    if (app.user.numberOfCoupons > 0) {
+        NSDictionary *payDic = [app.arrPayDictinaryData objectAtIndex:app.arrPayDictinaryData.count-1];
+        NSArray *payData = [payDic objectForKey:@"pay info"];
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"MM-dd-yyyy"];
+        ;
+        NSString* amount =(NSString*)[[payData objectAtIndex:payData.count-1]objectForKey:@"amount"];
+        self.Membership.text = [NSString stringWithFormat:@"$%@ / Month : %d%%", amount,2*[amount intValue]];
+        dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm";
+        
+        NSDateComponents *dateComponents = [[NSDateComponents alloc] init];
+        [dateComponents setMonth:1];
+        NSCalendar *calendar = [NSCalendar currentCalendar];
+        NSDate *newDate = [calendar dateByAddingComponents:dateComponents toDate:app.user.dateCycleStart options:0];
+        
+        self.JobID.text = [NSString stringWithFormat:@"you can use %d coupons until %@.",app.user.numberOfCoupons, [dateFormatter stringFromDate:newDate] ];
+    }
+    
+    if (app.user.numberOfCoupons==0) {
+        self.JobID.text = [NSString stringWithFormat:@"you have not any coupon."];    }
+    
+    
     self.UserName.text = app.user.name;
-    self.Membership.text = app.user.membership;
+    
+    
+    
+    [self.imgIsPaid setHidden:!app.user.isCancelled];
+    
     [self.tabBarItem setSelectedImage:[[UIImage imageNamed:@"MyCard_Active.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     [self.tabBarItem setImage:[[UIImage imageNamed:@"MyCard_InActive.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
-    [self.tabBarItem setTitle:@"MY CARD"];
+    [self.tabBarItem setTitle:@"PAID"];
+    [self.imgPhoto sd_setImageWithURL:app.user.photoURL placeholderImage:[UIImage imageNamed:@"person0.jpg"]];
     
-    
-    
+    [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
+    [self.view addGestureRecognizer:self.revealViewController.tapGestureRecognizer];
+    [self.payHistoryTableView reloadData];
 }
 
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
-    return app.arrPayDictinaryData.count;
-}
+#pragma mark - collectionView delegate
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    if ([FIRAuth auth].currentUser.isAnonymous) {
+        return 0;
+    }
     return [[[app.arrPayDictinaryData objectAtIndex:section] objectForKey:@"pay info"] count] ;
 }
 
@@ -57,57 +87,25 @@
     NSDictionary *payDic = [app.arrPayDictinaryData objectAtIndex:indexPath.section];
     NSArray *payData = [payDic objectForKey:@"pay info"];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"MM/dd/yyyy"];
+    [dateFormatter setDateFormat:@"MM-dd-yyyy"];
      ;
     NSString* amount =(NSString*)[[payData objectAtIndex:indexPath.row]objectForKey:@"amount"];
     Amount.text =  [NSString stringWithFormat:@"$%@",amount];
     NSDate *datePay = (NSDate*)[[payData objectAtIndex:indexPath.row] objectForKey:@"date"];
     memberShip.text = [NSString stringWithFormat:@"$%@ / Month : %d%%", amount,2*[amount intValue]];
     date.text = [dateFormatter stringFromDate: datePay];
-    NSString* tam= date.text;
     return  cell;
 
 }
-
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    return CGSizeMake(collectionView.frame.size.width, 50);
+}
 
 - (CGFloat)collectionView: (UICollectionView*)collectionView layout:(nonnull UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section{
     return 5;
 }
-- (UICollectionReusableView*)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
-{
-    UICollectionReusableView *reusableview = nil;
-    //hederview processig
-    if (kind == UICollectionElementKindSectionHeader) {
-        NSURL *photoURL;
-        NSString *name = [[app.arrPayDictinaryData objectAtIndex:indexPath.section] objectForKey:@"name"];
-        if ([[app.arrPayDictinaryData objectAtIndex:indexPath.section] objectForKey:@"photourl"]) {
-            photoURL = [[NSURL alloc]initWithString:[[app.arrPayDictinaryData objectAtIndex:indexPath.section] objectForKey:@"photourl"]];
-        }
-        
-        PayHistoryCollectionReusableView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"payheaerview" forIndexPath:indexPath];
-        headerView.lableName.text = name;
-        [headerView.imagePhoto sd_setImageWithURL:photoURL placeholderImage:[UIImage imageNamed:@"person0.jpg"]];
-        
-        reusableview = headerView;
-    }
-    
-//    if (kind == UICollectionElementKindSectionFooter) {
-//        UICollectionReusableView *footerview = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"FooterView" forIndexPath:indexPath];
-//        
-//        reusableview = footerview;
-//    }
-    
-    return reusableview;
-}
+#pragma mark - go side
 - (IBAction)goSideMenu:(UIButton *)sender {
     [self.navigationController.revealViewController rightRevealToggle:nil];
 }
-- (void) viewWillAppear:(BOOL)animated{
-    [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
-    [self.view addGestureRecognizer:self.revealViewController.tapGestureRecognizer];
-    [self.imgPhoto sd_setImageWithURL:app.user.photoURL placeholderImage:[UIImage imageNamed:@"person0.jpg"]];
-}
-
-
-
 @end
