@@ -66,6 +66,11 @@
         return YES;
     }
     else if(textField.tag == 103){
+        [(UITextField*)[self.view viewWithTag:104] becomeFirstResponder];
+        return YES;
+        
+        
+    }else if(textField.tag == 104){
         [textField resignFirstResponder];
         [self RegisterCard:nil];
         return YES;
@@ -149,7 +154,7 @@
         }];
         [loginErrorAlert addAction:ok];
         
-    } else if ([strUserPass isEqual:strConfirmPass]) {
+    } else if (![strUserPass isEqual:strConfirmPass]) {
         UIAlertController * loginErrorAlert = [UIAlertController
                                                alertControllerWithTitle:@"The passwords don't match"
                                                message:@"Please confirm the password."
