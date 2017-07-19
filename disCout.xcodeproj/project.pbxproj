@@ -1000,7 +1000,7 @@
 					F32C31731D3FFDD700D0D78D = {
 						CreatedOnToolsVersion = 7.3;
 						DevelopmentTeam = P4E5P2Q492;
-						ProvisioningStyle = Manual;
+						ProvisioningStyle = Automatic;
 					};
 					F32C318C1D3FFDD700D0D78D = {
 						CreatedOnToolsVersion = 7.3;
@@ -1484,7 +1484,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Nazrin Jahangirova (8JZ3N35PPV)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = P4E5P2Q492;
 				INFOPLIST_FILE = disCout/Info.plist;
@@ -1492,8 +1492,8 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nazrin.discoutUser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "3c22add9-2362-431e-84b9-8d64c0df04da";
-				PROVISIONING_PROFILE_SPECIFIER = hedin_dev;
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "disCout/disCout-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1507,15 +1507,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Nazrin Jahangirova (P4E5P2Q492)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = P4E5P2Q492;
 				INFOPLIST_FILE = disCout/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nazrin.discoutUser;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "b7c373b0-e5a7-4a6e-a90a-d375ebdaa631";
-				PROVISIONING_PROFILE_SPECIFIER = hedin_appstore;
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "disCout/disCout-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};

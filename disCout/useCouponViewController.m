@@ -11,6 +11,8 @@
 {
     AppDelegate *app;
     NSString *ResID;
+    BOOL useCouponDelayTime;
+    NSTimer* myTimer;
 }
 @end
 
@@ -19,6 +21,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    useCouponDelayTime = false;
     app = [UIApplication sharedApplication].delegate;
     [self.tabBarItem setSelectedImage:[[UIImage imageNamed:@"Coupone_Active.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
     [self.tabBarItem setImage:[[UIImage imageNamed:@"Coupone_InActive.png"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]];
@@ -132,54 +135,62 @@
         
         [loginErrorAlert addAction:ok];
     }else {
-        UIAlertController * loginErrorAlert = [UIAlertController
-                                               alertControllerWithTitle:@"Use Coupon"
-                                               message:[NSString stringWithFormat:@"Are sure use Coupon?\nUsed Coupons: %d", app.user.numberOfCoupons + 1]
-                                               preferredStyle:UIAlertControllerStyleAlert];
-        [self presentViewController:loginErrorAlert animated:YES completion:nil];
-        UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"resid ==[c] %@", resID];
-            NSArray* arrSearchedRes = [[NSArray alloc]initWithArray:[app.arrRegisteredDictinaryRestaurantData filteredArrayUsingPredicate:predicate]];
-            if (arrSearchedRes.count > 0) {
-                //count down user's number of coupons
-                NSMutableDictionary *dic = [[NSMutableDictionary alloc]initWithDictionary:arrSearchedRes.firstObject];
-                int numberOfCouponsRes = [[dic objectForKey:@"numberOfCoupons"] intValue] + 1;
-                app.user.numberOfCoupons = app.user.numberOfCoupons + 1;
-                NSString *ResName = [dic objectForKey:@"name"];
-                
-                //count up restaurant's number of coupons
-                
-                [dic setValue:[NSString stringWithFormat:@"%d", numberOfCouponsRes] forKey:@"numberOfCoupons"];
-                FIRDatabaseReference* savedResData = [[[[FIRDatabase database] reference]child:@"restaurants"] child:ResName];
-                [savedResData setValue:dic];
-                [app.arrRegisteredDictinaryRestaurantData addObject:dic];
-                
-                //register date
-                NSString* datetext = [self string_from_date:[NSDate networkDate]];
-                [Request saveUsedCoupon:datetext ResName:ResName];
-            }else{
-                UIAlertController * loginErrorAlert = [UIAlertController
-                                                       alertControllerWithTitle:@"Invalid ID"
-                                                       message:@"Please enter the correct ID"
-                                                       preferredStyle:UIAlertControllerStyleAlert];
-                [self presentViewController:loginErrorAlert animated:YES completion:nil];
-                UIAlertAction *ok = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-                    [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
-                    [self viewDidLoad];
-                    
-                }];
-                [loginErrorAlert addAction:ok];
-                
-            }
+        if (!useCouponDelayTime) {
+            useCouponDelayTime = true;
+            myTimer = [NSTimer scheduledTimerWithTimeInterval: 5.0 target: self
+                                                              selector: @selector(callAfterSixtySecond:) userInfo: nil repeats: NO];
             
-            [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
-            //[self.navigationController popViewControllerAnimated:YES];
-        }];
-        UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"CANCEL" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-            [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
-        }];
-        [loginErrorAlert addAction:ok];
-        [loginErrorAlert addAction:cancel];
+            UIAlertController * loginErrorAlert = [UIAlertController
+                                                   alertControllerWithTitle:@"Use Coupon"
+                                                   message:[NSString stringWithFormat:@"Are sure use Coupon?\nUsed Coupons: %d", app.user.numberOfCoupons + 1]
+                                                   preferredStyle:UIAlertControllerStyleAlert];
+            [self presentViewController:loginErrorAlert animated:YES completion:nil];
+            UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                NSPredicate *predicate = [NSPredicate predicateWithFormat:@"resid ==[c] %@", resID];
+                NSArray* arrSearchedRes = [[NSArray alloc]initWithArray:[app.arrRegisteredDictinaryRestaurantData filteredArrayUsingPredicate:predicate]];
+                if (arrSearchedRes.count > 0) {
+                    //count down user's number of coupons
+                    NSMutableDictionary *dic = [[NSMutableDictionary alloc]initWithDictionary:arrSearchedRes.firstObject];
+                    int numberOfCouponsRes = [[dic objectForKey:@"numberOfCoupons"] intValue] + 1;
+                    app.user.numberOfCoupons = app.user.numberOfCoupons + 1;
+                    NSString *ResName = [dic objectForKey:@"name"];
+                    
+                    //count up restaurant's number of coupons
+                    
+                    [dic setValue:[NSString stringWithFormat:@"%d", numberOfCouponsRes] forKey:@"numberOfCoupons"];
+                    FIRDatabaseReference* savedResData = [[[[FIRDatabase database] reference]child:@"restaurants"] child:ResName];
+                    [savedResData setValue:dic];
+                    [app.arrRegisteredDictinaryRestaurantData addObject:dic];
+                    
+                    //register date
+                    NSString* datetext = [self string_from_date:[NSDate networkDate]];
+                    [Request saveUsedCoupon:datetext ResName:ResName];
+                }else{
+                    UIAlertController * loginErrorAlert = [UIAlertController
+                                                           alertControllerWithTitle:@"Invalid ID"
+                                                           message:@"Please enter the correct ID"
+                                                           preferredStyle:UIAlertControllerStyleAlert];
+                    [self presentViewController:loginErrorAlert animated:YES completion:nil];
+                    UIAlertAction *ok = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                        [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                        [self viewDidLoad];
+                        
+                    }];
+                    [loginErrorAlert addAction:ok];
+                    
+                }
+                
+                [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+                //[self.navigationController popViewControllerAnimated:YES];
+            }];
+            UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"CANCEL" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                [loginErrorAlert dismissViewControllerAnimated:YES completion:nil];
+            }];
+            [loginErrorAlert addAction:ok];
+            [loginErrorAlert addAction:cancel];
+            
+        }
+        
         
     }
 
@@ -203,6 +214,10 @@
     NSString *strReturn = [dateFormatter stringFromDate:date];
     return strReturn;
 }
-
+-(void) callAfterSixtySecond:(NSTimer*) t
+{
+    useCouponDelayTime = false;
+    t = nil;
+}
 
 @end
