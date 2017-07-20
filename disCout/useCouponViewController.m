@@ -139,29 +139,35 @@
             useCouponDelayTime = true;
             myTimer = [NSTimer scheduledTimerWithTimeInterval: 5.0 target: self
                                                               selector: @selector(callAfterSixtySecond:) userInfo: nil repeats: NO];
+            NSString *ResName;
+            NSMutableDictionary *dic;
+            int numberOfCouponsRes;
+            NSPredicate *predicate = [NSPredicate predicateWithFormat:@"resid ==[c] %@", resID];
+            NSArray* arrSearchedRes = [[NSArray alloc]initWithArray:[app.arrRegisteredDictinaryRestaurantData filteredArrayUsingPredicate:predicate]];
+            if (arrSearchedRes.count > 0) {
+                //count down user's number of coupons
+                dic = [[NSMutableDictionary alloc]initWithDictionary:arrSearchedRes.firstObject];
+                numberOfCouponsRes = [[dic objectForKey:@"numberOfCoupons"] intValue] + 1;
+                app.user.numberOfCoupons = app.user.numberOfCoupons + 1;
+                ResName = [dic objectForKey:@"name"];
+                
+                
+            }
             
             UIAlertController * loginErrorAlert = [UIAlertController
                                                    alertControllerWithTitle:@"Use Coupon"
-                                                   message:[NSString stringWithFormat:@"Are sure use Coupon?\nUsed Coupons: %d", app.user.numberOfCoupons + 1]
+                                                   message:[NSString stringWithFormat:@"Are you sure use this coupon?\n%@: %@", ResName, resID]
                                                    preferredStyle:UIAlertControllerStyleAlert];
             [self presentViewController:loginErrorAlert animated:YES completion:nil];
             UIAlertAction *ok = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
-                NSPredicate *predicate = [NSPredicate predicateWithFormat:@"resid ==[c] %@", resID];
-                NSArray* arrSearchedRes = [[NSArray alloc]initWithArray:[app.arrRegisteredDictinaryRestaurantData filteredArrayUsingPredicate:predicate]];
+                
                 if (arrSearchedRes.count > 0) {
-                    //count down user's number of coupons
-                    NSMutableDictionary *dic = [[NSMutableDictionary alloc]initWithDictionary:arrSearchedRes.firstObject];
-                    int numberOfCouponsRes = [[dic objectForKey:@"numberOfCoupons"] intValue] + 1;
-                    app.user.numberOfCoupons = app.user.numberOfCoupons + 1;
-                    NSString *ResName = [dic objectForKey:@"name"];
-                    
                     //count up restaurant's number of coupons
                     
                     [dic setValue:[NSString stringWithFormat:@"%d", numberOfCouponsRes] forKey:@"numberOfCoupons"];
                     FIRDatabaseReference* savedResData = [[[[FIRDatabase database] reference]child:@"restaurants"] child:ResName];
                     [savedResData setValue:dic];
                     [app.arrRegisteredDictinaryRestaurantData addObject:dic];
-                    
                     //register date
                     NSString* datetext = [self string_from_date:[NSDate networkDate]];
                     [Request saveUsedCoupon:datetext ResName:ResName];
