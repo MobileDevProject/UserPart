@@ -7,9 +7,9 @@
 	<key>AD_UNIT_ID_FOR_INTERSTITIAL_TEST</key>
 	<string>ca-app-pub-3940256099942544/4411468910</string>
 	<key>CLIENT_ID</key>
-	<string>357420080174-pe6lvcr1lrfhq7apnsvjnajpgqjudgk4.apps.googleusercontent.com</string>
+	<string>357420080174-i5glnp6ekqtb5au3j2qkuvbm0ieovpo2.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.357420080174-pe6lvcr1lrfhq7apnsvjnajpgqjudgk4</string>
+	<string>com.googleusercontent.apps.357420080174-i5glnp6ekqtb5au3j2qkuvbm0ieovpo2</string>
 	<key>API_KEY</key>
 	<string>AIzaSyAdgz_4-CCynXHEhEFOf8xmU6Y39adtONQ</string>
 	<key>GCM_SENDER_ID</key>
@@ -17,7 +17,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.nazrin.discout</string>
+	<string>com.nazrin.discoutUser</string>
 	<key>PROJECT_ID</key>
 	<string>discout-89fb2</string>
 	<key>STORAGE_BUCKET</key>
@@ -33,7 +33,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true/>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:357420080174:ios:2d98a1881e1e6ef4</string>
+	<string>1:357420080174:ios:50ab6b85cc6c955e</string>
 	<key>DATABASE_URL</key>
 	<string>https://discout-89fb2.firebaseio.com</string>
 </dict>

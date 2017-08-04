@@ -9,7 +9,7 @@ FIRDatabaseReference *ref;
     return [[FIRDatabase database] reference];
 }
 + (FIRStorageReference*)storageref{
-    return [[FIRStorage storage] referenceForURL:@"gs://discout-a93e0.appspot.com"];
+    return [[FIRStorage storage] referenceForURL:@"gs://discout-89fb2.firebaseio.com"];
 }
 + (FIRUser*)currentUser{
     return [FIRAuth auth].currentUser;
