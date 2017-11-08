@@ -85,6 +85,8 @@
     self.lblAddress.text = ResAddress;
     self.lblCategories.text = ResCategories;
     [self.lblResID setText:ResID];
+    [self.lblResID setHidden:YES];
+    
     if ([ResReviewCount intValue] == 0) {
         self.lblReviewNumber.text =[NSString stringWithFormat:@"no review"] ;
     }else{
